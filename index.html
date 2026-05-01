@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense &amp; Budget Visualizer - Sandra</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Expense &amp; Budget Visualizer</h1>
+    <div id="balance-container">
+      Total: <span id="balance">$0.00</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="form-section">
+      <form id="transaction-form" novalidate>
+        <label for="input-name">Item name</label>
+        <input id="input-name" type="text" placeholder="Item name" autocomplete="off">
+        <span id="error-name" class="error"></span>
+
+        <label for="input-amount">Amount</label>
+        <input id="input-amount" type="number" placeholder="Amount" min="0.01" step="0.01">
+        <span id="error-amount" class="error"></span>
+
+        <label for="input-category">Category</label>
+        <select id="input-category">
+          <option value="">Select category</option>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Fun">Fun</option>
+        </select>
+        <span id="error-category" class="error"></span>
+
+        <button type="submit">Add Transaction</button>
+      </form>
+    </section>
+
+    <section id="list-section">
+      <h2>Transactions</h2>
+      <ul id="transaction-list"></ul>
+    </section>
+
+    <section id="chart-section">
+      <h2>Spending by Category</h2>
+      <canvas id="spending-chart"></canvas>
+      <p id="chart-empty-state" hidden>No transactions yet.</p>
+    </section>
+  </main>
+
+  <div id="storage-warning" hidden>Could not load saved data. Starting fresh.</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

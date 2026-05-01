@@ -1,0 +1,374 @@
+/* ============================================================
+   css/style.css — Expense & Budget Visualizer
+   ============================================================ */
+
+/* -----------------------------------------------------------
+   2.1  Global reset and base typography
+   ----------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1a1a2e;
+  background-color: #f4f6f9;
+  min-height: 100vh;
+  /* Prevent horizontal scroll at any viewport width */
+  overflow-x: hidden;
+}
+
+/* -----------------------------------------------------------
+   2.2  Header and balance styles
+   ----------------------------------------------------------- */
+header {
+  background-color: #16213e;
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#balance-container {
+  font-size: 1rem;
+  color: #a8b2c8;
+}
+
+#balance {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-left: 0.25rem;
+}
+
+/* -----------------------------------------------------------
+   2.3  Form layout and inline error styles
+   ----------------------------------------------------------- */
+main {
+  max-width: 1200px;
+  /* Clamp to viewport so nothing bleeds past the edge at 320 px */
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+#form-section {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+#transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#transaction-form label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+  margin-top: 0.75rem;
+}
+
+#transaction-form label:first-child {
+  margin-top: 0;
+}
+
+#transaction-form input,
+#transaction-form select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#transaction-form input:focus,
+#transaction-form select:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+}
+
+/* Inline error spans — collapse when empty, show red when populated */
+.error {
+  display: block;
+  min-height: 0;
+  font-size: 0.8125rem;
+  color: #e53e3e;
+  /* Empty content collapses the element; content makes it visible */
+}
+
+.error:empty {
+  display: none;
+}
+
+#transaction-form button[type="submit"] {
+  margin-top: 1rem;
+  padding: 0.625rem 1.25rem;
+  background-color: #3182ce;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  align-self: flex-start;
+}
+
+#transaction-form button[type="submit"]:hover {
+  background-color: #2b6cb0;
+}
+
+#transaction-form button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+/* -----------------------------------------------------------
+   2.4  Transaction list styles
+   ----------------------------------------------------------- */
+#list-section {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+#list-section h2,
+#chart-section h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+#transaction-list {
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Scrollbar styling (webkit) */
+#transaction-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#transaction-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#transaction-list::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+#transaction-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+}
+
+/* Name takes remaining space */
+#transaction-list li .tx-name {
+  flex: 1 1 auto;
+  /* min-width: 0 lets the flex item shrink below its content size,
+     preventing overflow on narrow viewports */
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#transaction-list li .tx-amount {
+  font-weight: 600;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+#transaction-list li .tx-category {
+  font-size: 0.8125rem;
+  color: #718096;
+  background-color: #edf2f7;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Delete button */
+.delete-btn {
+  flex-shrink: 0;
+  padding: 0.25rem 0.625rem;
+  background-color: #fff5f5;
+  color: #c53030;
+  border: 1px solid #feb2b2;
+  border-radius: 5px;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-btn:hover {
+  background-color: #fc8181;
+  color: #ffffff;
+  border-color: #fc8181;
+}
+
+/* Empty-state paragraph inside list */
+#transaction-list p {
+  color: #a0aec0;
+  font-size: 0.9375rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* -----------------------------------------------------------
+   2.5  Chart section styles
+   ----------------------------------------------------------- */
+#chart-section {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#chart-section h2 {
+  align-self: flex-start;
+}
+
+#spending-chart {
+  max-width: 360px;
+  width: 100%;
+  height: auto;
+}
+
+#chart-empty-state {
+  color: #a0aec0;
+  font-size: 0.9375rem;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* -----------------------------------------------------------
+   2.6  Storage warning banner styles
+   ----------------------------------------------------------- */
+#storage-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #fefcbf;
+  color: #744210;
+  border-bottom: 2px solid #f6e05e;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Push main content down when the banner is visible */
+#storage-warning:not([hidden]) ~ main {
+  margin-top: 2.5rem;
+}
+
+/* -----------------------------------------------------------
+   2.7  Responsive layout
+   ----------------------------------------------------------- */
+
+/* Default: single-column, works from 320 px up */
+@media (max-width: 767px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Scale down the title slightly so it fits on 320 px without wrapping */
+  header h1 {
+    font-size: 1.1rem;
+  }
+
+  /* Full-width submit button is easier to tap on mobile */
+  #transaction-form button[type="submit"] {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  /* Tighten list item layout on very narrow screens */
+  #transaction-list li {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Chart capped to full available width on mobile */
+  #spending-chart {
+    max-width: 100%;
+  }
+}
+
+/* ≥ 768 px: form and list side-by-side, chart below full-width */
+@media (min-width: 768px) {
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "form  list"
+      "chart chart";
+    gap: 1.5rem;
+  }
+
+  #form-section  { grid-area: form; }
+  #list-section  { grid-area: list; }
+  #chart-section { grid-area: chart; }
+
+  #spending-chart {
+    max-width: 420px;
+  }
+}
+
+/* ≥ 1280 px: slightly wider chart cap */
+@media (min-width: 1280px) {
+  #spending-chart {
+    max-width: 480px;
+  }
+}
