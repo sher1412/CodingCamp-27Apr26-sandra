@@ -12,7 +12,8 @@ The Expense & Budget Visualizer is a client-side web application that allows use
 - **Transaction**: A single expense entry consisting of an item name, a monetary amount, and a category.
 - **Transaction_List**: The scrollable UI component that displays all stored transactions.
 - **Input_Form**: The HTML form through which the user enters a new transaction.
-- **Category**: A classification label for a transaction. Valid values are: `Food`, `Transport`, and `Fun`.
+- **Category**: A classification label for a transaction. Default values are: `Food`, `Transport`, and `Fun`. Users may add custom categories.
+- **Custom_Category**: A user-defined category name added beyond the three defaults, persisted in Local_Storage.
 - **Balance**: The running total of all transaction amounts currently stored.
 - **Chart**: The pie chart component that visualises spending distribution by category.
 - **Local_Storage**: The browser's `localStorage` API used for client-side data persistence.
@@ -124,3 +125,47 @@ The Expense & Budget Visualizer is a client-side web application that allows use
 1. WHEN the user adds or deletes a transaction, THE App SHALL update the Transaction_List, Balance, and Chart within 100 milliseconds on a modern desktop browser.
 2. THE App SHALL present a clean, minimal interface with clear visual hierarchy and readable typography that requires no onboarding or documentation to use.
 3. THE App SHALL be responsive and usable on viewport widths from 320px to 1920px without horizontal scrolling or overlapping elements.
+
+---
+
+### Requirement 9: Sort Transactions
+
+**User Story:** As a user, I want to sort the transaction list by amount or category, so that I can quickly find and review entries in a meaningful order.
+
+#### Acceptance Criteria
+
+1. THE App SHALL display sort controls above the Transaction_List that allow the user to sort by amount ascending, amount descending, or category name A-Z.
+2. WHEN the user selects a sort option, THE App SHALL re-render the Transaction_List in the chosen order without modifying the stored order of transactions in Local_Storage.
+3. WHEN a new transaction is added or an existing transaction is deleted, THE App SHALL re-render the Transaction_List applying the currently active sort option.
+4. WHEN no sort option has been selected, THE App SHALL display transactions in the order they were added.
+
+---
+
+### Requirement 10: Custom Categories
+
+**User Story:** As a user, I want to add my own expense categories, so that I can track spending in ways that match my personal habits beyond the default set.
+
+#### Acceptance Criteria
+
+1. THE App SHALL provide a UI control that allows the user to type and submit a new category name.
+2. WHEN the user submits a new category name that is non-empty after trimming and does not already exist (case-insensitive), THE App SHALL add it to the active category list, persist the updated list to Local_Storage, and make it immediately available in the Input_Form category dropdown.
+3. WHEN the user submits a category name that is empty or consists only of whitespace, THE App SHALL display an inline error and SHALL NOT add the category.
+4. WHEN the user submits a category name that already exists (case-insensitive match), THE App SHALL display an inline error and SHALL NOT add a duplicate.
+5. THE App SHALL display all current categories (default and custom) in a manageable list, with a delete control for each custom category.
+6. WHEN the user deletes a custom category, THE App SHALL remove it from the category list, persist the updated list to Local_Storage, and remove it from the Input_Form dropdown; existing transactions that used that category SHALL retain their category value unchanged.
+7. THE default categories (`Food`, `Transport`, `Fun`) SHALL NOT be deletable.
+8. WHEN the App initialises, THE App SHALL read the custom category list from Local_Storage and restore it before rendering the Input_Form dropdown.
+9. THE Chart SHALL render segments for all categories — default and custom — that have a non-zero transaction total.
+
+---
+
+### Requirement 11: Dark/Light Mode Toggle
+
+**User Story:** As a user, I want to toggle between dark and light colour themes, so that I can use the application comfortably in different lighting conditions.
+
+#### Acceptance Criteria
+
+1. THE App SHALL display a theme toggle control in the header that allows the user to switch between dark and light colour modes.
+2. WHEN the user activates the theme toggle, THE App SHALL switch the active colour theme between dark and light and SHALL persist the selected preference to Local_Storage.
+3. WHEN the App initialises, THE App SHALL read the theme preference from Local_Storage and apply it to the document before the first render to prevent a flash of unstyled content.
+4. IF no theme preference is found in Local_Storage, THEN THE App SHALL apply the light theme as the default.

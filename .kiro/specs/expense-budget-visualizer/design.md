@@ -357,3 +357,404 @@ The Correctness Properties section above identifies nine universal properties. I
 ### Responsiveness
 
 Manual verification at 320 px, 768 px, 1280 px, and 1920 px viewport widths to confirm no horizontal scroll and no overlapping elements.
+
+
+---
+
+## Requirement 9: Sort Transactions
+
+### Overview
+
+A sort control is added above the transaction list. Sorting is a pure view-layer concern — it never touches the stored array or `localStorage`. The active sort key is held in a module-level variable and re-applied on every render.
+
+### DOM Additions
+
+```html
+<!-- inserted immediately above #transaction-list inside #list-section -->
+<div id="sort-controls">
+  <label for="sort-select">Sort by:</label>
+  <select id="sort-select">
+    <option value="default">Default (date added)</option>
+    <option value="amount-asc">Amount: Low → High</option>
+    <option value="amount-desc">Amount: High → Low</option>
+    <option value="category-asc">Category: A → Z</option>
+  </select>
+</div>
+```
+
+### State
+
+```js
+let currentSort = "default";   // module-level; never persisted to localStorage
+```
+
+### New Function: `sorting_sort`
+
+```
+sorting_sort(transactions: Transaction[], sortKey: string) → Transaction[]
+
+  Returns a NEW array — never mutates the `transactions` argument.
+
+  Sort keys:
+    "default"      — original insertion order (uses the transaction's position
+                     in the source array; requires that the source array always
+                     reflects insertion order, which it does because only
+                     rendering_renderAll sorts, never the stored array)
+    "amount-asc"   — ascending by transaction.amount
+    "amount-desc"  — descending by transaction.amount
+    "category-asc" — ascending by transaction.category (locale-aware string compare)
+
+  Implementation note: spread the array before sorting so the original is
+  untouched: return [...transactions].sort(comparator).
+```
+
+### Updated Rendering Functions
+
+**`rendering_renderList(transactions)`** — unchanged signature; the caller is now responsible for passing an already-sorted array.
+
+**`rendering_renderAll()`** — updated to apply the sort before delegating:
+
+```js
+function rendering_renderAll() {
+  const sorted = sorting_sort(transactions, currentSort);
+  rendering_renderList(sorted);
+  rendering_renderBalance(transactions);   // balance uses unsorted source
+  chart_render(chartInstance, transactions); // chart uses unsorted source
+}
+```
+
+### Event Wiring Addition
+
+| Event | Element | Handler |
+|---|---|---|
+| `change` | `#sort-select` | `currentSort = e.target.value` → `rendering_renderAll()` |
+
+### Interaction with Add / Delete
+
+Because `rendering_renderAll()` is called after every add and delete, the active sort is automatically re-applied — no extra logic needed.
+
+---
+
+## Requirement 10: Custom Categories
+
+### Overview
+
+Users can add and delete custom categories beyond the three defaults (`Food`, `Transport`, `Fun`). The active category list is stored in `localStorage` and drives both the Input_Form dropdown and the chart. Default categories are protected from deletion. Existing transactions are never mutated when a custom category is deleted.
+
+### DOM Additions
+
+```html
+<!-- inside #form-section, below the transaction form -->
+<div id="category-manager">
+  <h3>Manage Categories</h3>
+  <div id="category-add-row">
+    <input id="input-new-category" type="text" placeholder="New category name" />
+    <button id="btn-add-category" type="button">Add</button>
+    <span id="error-new-category" class="error"></span>
+  </div>
+  <ul id="category-list"></ul>
+</div>
+```
+
+The `<select id="input-category">` in the transaction form is populated dynamically from the active category list — no hard-coded `<option>` elements beyond the empty default.
+
+### State
+
+```js
+const DEFAULT_CATEGORIES = ["Food", "Transport", "Fun"];  // immutable, never persisted
+let categories = [...DEFAULT_CATEGORIES];                  // module-level; includes custom additions
+```
+
+### localStorage Key
+
+```js
+const CATEGORIES_KEY = "customCategories";  // stores only the custom (non-default) additions
+```
+
+### New Storage Functions
+
+```
+storage_loadCategories() → string[]
+    Reads CATEGORIES_KEY from localStorage inside a try/catch.
+    Parses JSON; returns the array if valid, [] on any failure.
+    Caller merges with DEFAULT_CATEGORIES: [...DEFAULT_CATEGORIES, ...custom].
+
+storage_saveCategories(categories: string[]) → void
+    Filters out DEFAULT_CATEGORIES to get only custom entries.
+    Serialises the custom-only array and writes to CATEGORIES_KEY.
+    Wraps in try/catch; logs console warning on failure.
+```
+
+### New Category Functions
+
+```
+categories_add(name: string) → { success: boolean, error?: string }
+    Trims name.
+    Rejects if empty → error "Category name cannot be empty."
+    Rejects if name.toLowerCase() matches any existing category (case-insensitive) → error "Category already exists."
+    Otherwise: pushes trimmed name onto categories array → storage_saveCategories → rendering_renderCategoryDropdown → rendering_renderCategoryList → returns { success: true }.
+
+categories_delete(name: string) → void
+    Guard: if name is in DEFAULT_CATEGORIES, do nothing (default categories are protected).
+    Removes name from categories array.
+    Calls storage_saveCategories(categories).
+    Calls rendering_renderCategoryDropdown() and rendering_renderCategoryList().
+    Does NOT touch the transactions array — existing transactions keep their category value.
+```
+
+### New Rendering Functions
+
+```
+rendering_renderCategoryDropdown() → void
+    Clears all options from #input-category except the empty default option.
+    For each name in categories: appends <option value="{name}">{name}</option>.
+
+rendering_renderCategoryList() → void
+    Clears #category-list innerHTML.
+    For each name in categories:
+      Creates <li> with category name text.
+      If name is NOT in DEFAULT_CATEGORIES: appends a <button class="delete-cat-btn" data-cat="{name}">✕</button>.
+      Appends <li> to #category-list.
+```
+
+### Updated Validation
+
+`validation_validate` category rule changes from checking a hard-coded array to checking the live `categories` array:
+
+```
+category — must be a non-empty string present in the current `categories` array
+```
+
+### Updated Chart
+
+`chart_render` aggregates by all entries in `categories` (not just the three defaults). Colour assignment:
+
+- Default categories keep their fixed colours: Food → `#FF6384`, Transport → `#36A2EB`, Fun → `#FFCE56`
+- Custom categories receive colours from a deterministic palette cycle (e.g. `["#4BC0C0","#9966FF","#FF9F40","#C9CBCF"]`) based on their index in the custom list
+
+### Event Wiring Additions
+
+| Event | Element | Handler |
+|---|---|---|
+| `click` | `#btn-add-category` | Read `#input-new-category` → `categories_add(name)` → if error show `#error-new-category`; else clear input |
+| `click` (delegated) | `#category-list` | If target has class `delete-cat-btn`, read `data-cat` → `categories_delete(name)` |
+
+### Initialisation
+
+In `DOMContentLoaded`, after `storage_load()`:
+
+```js
+const customCats = storage_loadCategories();
+categories = [...DEFAULT_CATEGORIES, ...customCats];
+rendering_renderCategoryDropdown();
+rendering_renderCategoryList();
+```
+
+---
+
+## Requirement 11: Dark/Light Mode Toggle
+
+### Overview
+
+A toggle button in the header switches between dark and light colour themes. The theme is applied via a `data-theme` attribute on `<html>` so that a single CSS selector tree handles all overrides. The preference is persisted to `localStorage` and restored before the first render to eliminate any flash of unstyled content.
+
+### DOM Additions
+
+```html
+<!-- inside <header> -->
+<button id="theme-toggle" aria-label="Switch to dark mode">🌙</button>
+```
+
+### localStorage Key
+
+```js
+const THEME_KEY = "theme";
+```
+
+### New Theme Functions
+
+```
+theme_load() → "dark" | "light"
+    Reads THEME_KEY from localStorage.
+    Returns the stored value if it is exactly "dark" or "light".
+    Returns "light" for any other value (missing key, unexpected string).
+
+theme_apply(theme: "dark" | "light") → void
+    document.documentElement.setAttribute("data-theme", theme)
+    Updates #theme-toggle aria-label and inner text/icon:
+      "dark"  → label "Switch to light mode", icon "☀️"
+      "light" → label "Switch to dark mode",  icon "🌙"
+
+theme_toggle() → void
+    Reads current data-theme from document.documentElement.
+    Flips: "dark" → "light", "light" → "dark".
+    Calls theme_apply(newTheme).
+    Writes newTheme to localStorage under THEME_KEY.
+```
+
+### CSS Architecture
+
+All colour values are defined as CSS custom properties on `:root` (light defaults). The `[data-theme="dark"]` selector on `<html>` overrides them:
+
+```css
+:root {
+  --color-bg:       #ffffff;
+  --color-surface:  #f5f5f5;
+  --color-text:     #1a1a1a;
+  --color-border:   #dddddd;
+  --color-primary:  #3498db;
+}
+
+[data-theme="dark"] {
+  --color-bg:       #1a1a2e;
+  --color-surface:  #16213e;
+  --color-text:     #e0e0e0;
+  --color-border:   #444466;
+  --color-primary:  #5dade2;
+}
+```
+
+All existing style rules reference `var(--color-*)` tokens rather than hard-coded values, so the theme switch is a single attribute change with no JavaScript DOM walking.
+
+### Initialisation Order (FOUC Prevention)
+
+The theme must be applied **before** any rendering occurs:
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. Apply theme first — prevents flash of unstyled content
+  const savedTheme = theme_load();
+  theme_apply(savedTheme);
+
+  // 2. Load transactions
+  transactions = storage_load();
+
+  // 3. Load custom categories
+  const customCats = storage_loadCategories();
+  categories = [...DEFAULT_CATEGORIES, ...customCats];
+  rendering_renderCategoryDropdown();
+  rendering_renderCategoryList();
+
+  // 4. Initialise chart
+  chartInstance = chart_init(document.getElementById("spending-chart"));
+
+  // 5. Render everything
+  rendering_renderAll();
+});
+```
+
+### Event Wiring Addition
+
+| Event | Element | Handler |
+|---|---|---|
+| `click` | `#theme-toggle` | `theme_toggle()` |
+
+---
+
+## Correctness Properties (Requirements 9–11)
+
+*These properties extend the existing Correctness Properties section (Properties 1–9) defined above.*
+
+### Property 10: Sort never mutates the source array and produces correct order
+
+*For any* transaction list and any sort key (`"default"`, `"amount-asc"`, `"amount-desc"`, `"category-asc"`), calling `sorting_sort(transactions, sortKey)` SHALL return a new array that:
+- is ordered correctly for the given key (ascending amount, descending amount, or A-Z category, or original insertion order for `"default"`), and
+- leaves the original `transactions` array reference and its contents completely unchanged.
+
+**Validates: Requirements 9.2, 9.4**
+
+---
+
+### Property 11: Re-render after mutation applies the active sort
+
+*For any* transaction list, active sort key, and mutation (add or delete), after the mutation `rendering_renderAll()` SHALL produce a rendered list whose item order matches `sorting_sort(updatedTransactions, currentSort)`.
+
+**Validates: Requirements 9.3**
+
+---
+
+### Property 12: Adding a valid category grows the list by exactly one
+
+*For any* category list of length N and any name that is non-empty after trimming and does not already exist (case-insensitive), calling `categories_add(name)` SHALL produce a category list of length N + 1 containing the new name, and SHALL return `{ success: true }`.
+
+**Validates: Requirements 10.2**
+
+---
+
+### Property 13: Adding a duplicate or empty name is rejected
+
+*For any* category list, calling `categories_add` with an empty/whitespace-only string or a name that matches an existing category (case-insensitive) SHALL return `{ success: false, error: string }` and SHALL NOT change the category list length.
+
+**Validates: Requirements 10.3, 10.4**
+
+---
+
+### Property 14: Deleting a custom category shrinks the list by one and leaves transactions unchanged
+
+*For any* category list containing a custom category C and any transaction list, calling `categories_delete(C)` SHALL produce a category list that does not contain C, and SHALL leave every transaction's `category` field unchanged.
+
+**Validates: Requirements 10.6**
+
+---
+
+### Property 15: Default categories are never deletable
+
+*For any* call to `categories_delete` with a name in `DEFAULT_CATEGORIES`, the category list SHALL remain unchanged.
+
+**Validates: Requirements 10.7**
+
+---
+
+### Property 16: Custom category localStorage round-trip
+
+*For any* array of custom category names, calling `storage_saveCategories` followed by `storage_loadCategories` SHALL return an array deeply equal to the custom-only portion of the saved list (same names, same order).
+
+**Validates: Requirements 10.2, 10.8**
+
+---
+
+### Property 17: Theme preference persists across simulated page reload
+
+*For any* theme value (`"dark"` or `"light"`), calling `theme_apply(theme)` and saving to localStorage, then calling `theme_load()` and `theme_apply()` again (simulating a page reload), SHALL result in `document.documentElement.getAttribute("data-theme")` equalling the originally applied theme. When no theme is stored in localStorage, `theme_load()` SHALL return `"light"`.
+
+**Validates: Requirements 11.2, 11.3, 11.4**
+
+---
+
+## Testing Strategy Additions (Requirements 9–11)
+
+The following entries extend the existing Testing Strategy section.
+
+### Property-Based Tests (new)
+
+| Property | Test pattern |
+|---|---|
+| 10 — Sort correctness and non-mutation | Generate arbitrary `Transaction[]` lists and all four sort keys; assert output order and that the original array is unchanged |
+| 11 — Re-render applies active sort | Generate list + sort key + mutation; assert rendered item order matches `sorting_sort` output |
+| 12 — Add valid category grows list | Generate category list + valid new name; assert length N+1 and name present |
+| 13 — Duplicate/empty category rejected | Generate existing names and empty strings; assert `success === false` and list unchanged |
+| 14 — Delete custom category, transactions unchanged | Generate category list + transaction list; delete custom cat; assert cat gone, transactions intact |
+| 15 — Default categories undeletable | For each default category name; assert list unchanged after `categories_delete` |
+| 16 — Custom category round-trip | Generate arbitrary custom name arrays; assert `loadCategories(saveCategories(x))` returns `x` |
+| 17 — Theme persistence round-trip | For each of `"dark"` and `"light"`: apply, save, reload, re-apply; assert `data-theme` attribute matches |
+
+### Unit / Example Tests (new)
+
+- `#sort-controls` and `#sort-select` exist in the DOM with the four expected option values.
+- `#category-manager`, `#input-new-category`, `#btn-add-category`, `#category-list` exist in the DOM.
+- `#input-category` dropdown is populated dynamically from the `categories` array on init.
+- Default categories appear in `#category-list` without a delete button.
+- Custom categories appear in `#category-list` with a delete button.
+- `#theme-toggle` exists inside `<header>` with a non-empty `aria-label`.
+- `theme_load()` returns `"light"` when `localStorage` has no `THEME_KEY`.
+- `storage_loadCategories()` returns `[]` for missing or malformed stored values.
+
+### Integration / Smoke Tests (new)
+
+- Selecting a sort option re-renders the list in the correct order without altering `localStorage` transaction data.
+- Adding a custom category makes it appear in `#category-list`, in `#input-category` dropdown, and persists to `localStorage`.
+- Adding a duplicate category name shows `#error-new-category` and does not add a duplicate.
+- Deleting a custom category removes it from the dropdown and list; existing transactions with that category retain their value.
+- Attempting to delete a default category via the UI is not possible (no delete button rendered).
+- Toggling the theme updates `data-theme` on `<html>`, persists to `localStorage`, and updates the toggle button label.
+- On page load with a saved dark-theme preference, `data-theme="dark"` is set before `rendering_renderAll()` executes (no FOUC).

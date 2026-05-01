@@ -3,6 +3,79 @@
    ============================================================ */
 
 /* -----------------------------------------------------------
+   CSS Custom Properties — light-mode defaults
+   ----------------------------------------------------------- */
+:root {
+  --color-bg:        #f4f6f9;
+  --color-surface:   #ffffff;
+  --color-text:      #1a1a2e;
+  --color-border:    #cbd5e0;
+  --color-primary:   #3182ce;
+
+  /* Derived / supporting tokens */
+  --color-text-muted:    #718096;
+  --color-text-subtle:   #a0aec0;
+  --color-text-heading:  #2d3748;
+  --color-text-label:    #4a5568;
+  --color-surface-alt:   #f7fafc;
+  --color-surface-input: #ffffff;
+  --color-header-bg:     #16213e;
+  --color-header-text:   #ffffff;
+  --color-header-muted:  #a8b2c8;
+  --color-balance:       #e2e8f0;
+  --color-focus-ring:    rgba(66, 153, 225, 0.2);
+  --color-scrollbar:     #cbd5e0;
+  --color-scrollbar-bg:  #f1f1f1;
+  --color-tag-bg:        #edf2f7;
+  --color-delete-bg:     #fff5f5;
+  --color-delete-text:   #c53030;
+  --color-delete-border: #feb2b2;
+  --color-delete-hover:  #fc8181;
+  --color-warning-bg:    #fefcbf;
+  --color-warning-text:  #744210;
+  --color-warning-border:#f6e05e;
+  --color-shadow:        rgba(0, 0, 0, 0.08);
+  --color-error:         #e53e3e;
+  --color-on-primary:    #ffffff;
+}
+
+/* -----------------------------------------------------------
+   Dark-mode overrides — applied via data-theme="dark" on <html>
+   ----------------------------------------------------------- */
+[data-theme="dark"] {
+  --color-bg:        #1a1a2e;
+  --color-surface:   #16213e;
+  --color-text:      #e0e0e0;
+  --color-border:    #444466;
+  --color-primary:   #5dade2;
+
+  --color-text-muted:    #9aa5b4;
+  --color-text-subtle:   #6b7280;
+  --color-text-heading:  #d1d5db;
+  --color-text-label:    #9ca3af;
+  --color-surface-alt:   #0f3460;
+  --color-surface-input: #1e2a45;
+  --color-header-bg:     #0f3460;
+  --color-header-text:   #e0e0e0;
+  --color-header-muted:  #8899aa;
+  --color-balance:       #e0e0e0;
+  --color-focus-ring:    rgba(93, 173, 226, 0.3);
+  --color-scrollbar:     #444466;
+  --color-scrollbar-bg:  #1a1a2e;
+  --color-tag-bg:        #0f3460;
+  --color-delete-bg:     #3b1a1a;
+  --color-delete-text:   #ff6b6b;
+  --color-delete-border: #7f2020;
+  --color-delete-hover:  #c0392b;
+  --color-warning-bg:    #3b3000;
+  --color-warning-text:  #fde68a;
+  --color-warning-border:#b7791f;
+  --color-shadow:        rgba(0, 0, 0, 0.3);
+  --color-error:         #fc8181;
+  --color-on-primary:    #ffffff;
+}
+
+/* -----------------------------------------------------------
    2.1  Global reset and base typography
    ----------------------------------------------------------- */
 *,
@@ -18,8 +91,8 @@ body {
     Helvetica, Arial, sans-serif;
   font-size: 1rem;
   line-height: 1.5;
-  color: #1a1a2e;
-  background-color: #f4f6f9;
+  color: var(--color-text);
+  background-color: var(--color-bg);
   min-height: 100vh;
   /* Prevent horizontal scroll at any viewport width */
   overflow-x: hidden;
@@ -29,8 +102,8 @@ body {
    2.2  Header and balance styles
    ----------------------------------------------------------- */
 header {
-  background-color: #16213e;
-  color: #ffffff;
+  background-color: var(--color-header-bg);
+  color: var(--color-header-text);
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
@@ -47,14 +120,54 @@ header h1 {
 
 #balance-container {
   font-size: 1rem;
-  color: #a8b2c8;
+  color: var(--color-header-muted);
 }
 
 #balance {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--color-balance);
   margin-left: 0.25rem;
+  /* output is inline by default — keep that behaviour */
+  display: inline;
+}
+
+/* -----------------------------------------------------------
+   Theme toggle button
+   ----------------------------------------------------------- */
+#theme-toggle {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.375rem 0.625rem;
+  font-size: 1.125rem;
+  cursor: pointer;
+  color: var(--color-header-text);
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+#theme-toggle:hover {
+  background-color: var(--color-surface-alt);
+  border-color: var(--color-primary);
+}
+
+/* -----------------------------------------------------------
+   Accessibility utilities
+   ----------------------------------------------------------- */
+
+/* Visually hidden but available to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* -----------------------------------------------------------
@@ -72,10 +185,17 @@ main {
 }
 
 #form-section {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+#form-section > h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-bottom: 1rem;
 }
 
 #transaction-form {
@@ -84,35 +204,42 @@ main {
   gap: 0.25rem;
 }
 
-#transaction-form label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4a5568;
+/* Wraps label + input + error span as a logical unit */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   margin-top: 0.75rem;
 }
 
-#transaction-form label:first-child {
+.field-group:first-of-type {
   margin-top: 0;
+}
+
+#transaction-form label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-label);
 }
 
 #transaction-form input,
 #transaction-form select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #cbd5e0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
-  color: #1a1a2e;
-  background-color: #ffffff;
+  color: var(--color-text);
+  background-color: var(--color-surface-input);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 #transaction-form input:focus,
 #transaction-form select:focus {
   outline: none;
-  border-color: #4299e1;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 /* Inline error spans — collapse when empty, show red when populated */
@@ -120,7 +247,7 @@ main {
   display: block;
   min-height: 0;
   font-size: 0.8125rem;
-  color: #e53e3e;
+  color: var(--color-error);
   /* Empty content collapses the element; content makes it visible */
 }
 
@@ -131,8 +258,8 @@ main {
 #transaction-form button[type="submit"] {
   margin-top: 1rem;
   padding: 0.625rem 1.25rem;
-  background-color: #3182ce;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
   border: none;
   border-radius: 6px;
   font-size: 1rem;
@@ -144,7 +271,7 @@ main {
 }
 
 #transaction-form button[type="submit"]:hover {
-  background-color: #2b6cb0;
+  filter: brightness(0.9);
 }
 
 #transaction-form button[type="submit"]:active {
@@ -155,17 +282,17 @@ main {
    2.4  Transaction list styles
    ----------------------------------------------------------- */
 #list-section {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
 }
 
 #list-section h2,
 #chart-section h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--color-text-heading);
   margin-bottom: 1rem;
 }
 
@@ -184,12 +311,12 @@ main {
 }
 
 #transaction-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-scrollbar-bg);
   border-radius: 3px;
 }
 
 #transaction-list::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
+  background: var(--color-scrollbar);
   border-radius: 3px;
 }
 
@@ -198,8 +325,8 @@ main {
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 0.75rem;
-  background-color: #f7fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.9375rem;
 }
@@ -214,18 +341,19 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-text);
 }
 
 #transaction-list li .tx-amount {
   font-weight: 600;
-  color: #2d3748;
+  color: var(--color-text-heading);
   white-space: nowrap;
 }
 
 #transaction-list li .tx-category {
   font-size: 0.8125rem;
-  color: #718096;
-  background-color: #edf2f7;
+  color: var(--color-text-muted);
+  background-color: var(--color-tag-bg);
   padding: 0.125rem 0.5rem;
   border-radius: 999px;
   white-space: nowrap;
@@ -235,9 +363,9 @@ main {
 .delete-btn {
   flex-shrink: 0;
   padding: 0.25rem 0.625rem;
-  background-color: #fff5f5;
-  color: #c53030;
-  border: 1px solid #feb2b2;
+  background-color: var(--color-delete-bg);
+  color: var(--color-delete-text);
+  border: 1px solid var(--color-delete-border);
   border-radius: 5px;
   font-size: 0.8125rem;
   font-family: inherit;
@@ -246,27 +374,60 @@ main {
 }
 
 .delete-btn:hover {
-  background-color: #fc8181;
-  color: #ffffff;
-  border-color: #fc8181;
+  background-color: var(--color-delete-hover);
+  color: var(--color-on-primary);
+  border-color: var(--color-delete-hover);
 }
 
 /* Empty-state paragraph inside list */
 #transaction-list p {
-  color: #a0aec0;
+  color: var(--color-text-subtle);
   font-size: 0.9375rem;
   text-align: center;
   padding: 1rem 0;
+}
+
+/* Sort controls */
+#sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+#sort-controls label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-label);
+  white-space: nowrap;
+}
+
+#sort-controls select {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface-input);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#sort-controls select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 /* -----------------------------------------------------------
    2.5  Chart section styles
    ----------------------------------------------------------- */
 #chart-section {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -283,14 +444,129 @@ main {
 }
 
 #chart-empty-state {
-  color: #a0aec0;
+  color: var(--color-text-subtle);
   font-size: 0.9375rem;
   text-align: center;
   padding: 2rem 0;
 }
 
 /* -----------------------------------------------------------
-   2.6  Storage warning banner styles
+   Category manager
+   ----------------------------------------------------------- */
+#category-manager {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+#category-manager h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-bottom: 0.75rem;
+}
+
+#category-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+#input-new-category {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface-input);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#input-new-category:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+#btn-add-category {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+#btn-add-category:hover {
+  filter: brightness(0.9);
+}
+
+#error-new-category {
+  width: 100%;
+}
+
+#category-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+#category-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.625rem;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+/* Default (protected) categories — muted to signal they can't be deleted */
+#category-list li.cat-default .cat-name {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+#category-list li .cat-name {
+  flex: 1 1 auto;
+  color: var(--color-text);
+}
+
+.delete-cat-btn {
+  flex-shrink: 0;
+  padding: 0.125rem 0.5rem;
+  background-color: var(--color-delete-bg);
+  color: var(--color-delete-text);
+  border: 1px solid var(--color-delete-border);
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-cat-btn:hover {
+  background-color: var(--color-delete-hover);
+  color: var(--color-on-primary);
+  border-color: var(--color-delete-hover);
+}
+
+/* -----------------------------------------------------------
+   2.7  Storage warning banner styles
    ----------------------------------------------------------- */
 #storage-warning {
   position: fixed;
@@ -298,9 +574,9 @@ main {
   left: 0;
   right: 0;
   z-index: 100;
-  background-color: #fefcbf;
-  color: #744210;
-  border-bottom: 2px solid #f6e05e;
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border-bottom: 2px solid var(--color-warning-border);
   padding: 0.625rem 1.25rem;
   font-size: 0.9375rem;
   font-weight: 500;

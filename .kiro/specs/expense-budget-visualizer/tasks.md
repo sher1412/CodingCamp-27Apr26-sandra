@@ -168,3 +168,146 @@ Build a zero-dependency, client-side SPA delivered as three static files (`index
 - `chartInstance` is a module-level variable so `rendering_renderAll` can reach it without passing it as a parameter every time
 - The delete handler uses event delegation on `#transaction-list` so re-renders don't require re-attaching listeners
 - `storage_save` failures are silent (console warning only) — in-memory state stays valid and the user can keep working
+
+- [x] 9. Implement Sort Transactions
+  - [x] 9.1 Add sort controls markup to `index.html`
+    - Add `<div id="sort-controls">` with `<label for="sort-select">` and `<select id="sort-select">` immediately above `<ul id="transaction-list">` inside `#list-section`
+    - Include four `<option>` elements: `value="default"` (Default — date added), `value="amount-asc"` (Amount: Low → High), `value="amount-desc"` (Amount: High → Low), `value="category-asc"` (Category: A → Z)
+    - _Requirements: 9.1_
+
+  - [x] 9.2 Add `currentSort` state variable in `js/app.js`
+    - Declare `let currentSort = "default";` at module level alongside the other state variables
+    - Add a `// --- sorting ---` comment block header for the new function group
+    - _Requirements: 9.4_
+
+  - [x] 9.3 Implement `sorting_sort(transactions, sortKey)` in `js/app.js`
+    - Return a new array via `[...transactions].sort(...)` — never mutate the source array
+    - `"default"`: return `[...transactions]` (preserves insertion order)
+    - `"amount-asc"`: sort by `transaction.amount` ascending
+    - `"amount-desc"`: sort by `transaction.amount` descending
+    - `"category-asc"`: sort by `transaction.category` using `localeCompare`
+    - _Requirements: 9.2, 9.4_
+
+  - [x] 9.4 Update `rendering_renderAll()` to apply the active sort
+    - Call `sorting_sort(transactions, currentSort)` and pass the result to `rendering_renderList`
+    - Keep `rendering_renderBalance(transactions)` and `chart_render(chartInstance, transactions)` using the unsorted source array
+    - _Requirements: 9.2, 9.3_
+
+  - [x] 9.5 Wire `change` event on `#sort-select`
+    - In the events section of `js/app.js`, add a `change` listener on `#sort-select`
+    - Handler: update `currentSort = e.target.value` then call `rendering_renderAll()`
+    - _Requirements: 9.1, 9.3_
+
+  - [x] 9.6 Add CSS for sort controls layout in `css/style.css`
+    - Style `#sort-controls` with appropriate spacing above the transaction list (e.g. `margin-bottom`)
+    - Align the label and select inline using flexbox or inline-block
+    - _Requirements: 9.1_
+
+- [x] 10. Implement Custom Categories
+  - [x] 10.1 Add category manager markup to `index.html`
+    - Add `<div id="category-manager">` inside `#form-section`, below `#transaction-form`
+    - Include `<input id="input-new-category" type="text" placeholder="New category name">`, `<button id="btn-add-category" type="button">Add</button>`, and `<span id="error-new-category" class="error"></span>` inside a `<div id="category-add-row">`
+    - Include `<ul id="category-list"></ul>` for the category list
+    - Remove hard-coded `<option>` elements from `<select id="input-category">` (keep only the empty default); dropdown will be populated dynamically
+    - _Requirements: 10.1, 10.5_
+
+  - [x] 10.2 Add `DEFAULT_CATEGORIES`, `categories` state, and `CATEGORIES_KEY` constant in `js/app.js`
+    - Declare `const DEFAULT_CATEGORIES = ["Food", "Transport", "Fun"];` — immutable, never persisted
+    - Declare `let categories = [...DEFAULT_CATEGORIES];` as module-level state
+    - Define `const CATEGORIES_KEY = "customCategories";` alongside other constants
+    - Add a `// --- categories ---` comment block header for the new function group
+    - Update `validation_validate` to check against the live `categories` array instead of the hard-coded array
+    - _Requirements: 10.1, 10.7_
+
+  - [x] 10.3 Implement `storage_loadCategories()` in `js/app.js`
+    - Read `CATEGORIES_KEY` from `localStorage` inside a `try/catch`
+    - Parse JSON; return the array if valid, `[]` on any failure (missing key, malformed JSON, non-array)
+    - _Requirements: 10.8_
+
+  - [x] 10.4 Implement `storage_saveCategories(categories)` in `js/app.js`
+    - Filter out `DEFAULT_CATEGORIES` to get only custom entries
+    - Serialise the custom-only array and write to `CATEGORIES_KEY` in `localStorage`
+    - Wrap in `try/catch`; log console warning on failure; do not throw
+    - _Requirements: 10.2_
+
+  - [x] 10.5 Implement `categories_add(name)` in `js/app.js`
+    - Trim `name`; reject with `{ success: false, error: "Category name cannot be empty." }` if empty after trim
+    - Reject with `{ success: false, error: "Category already exists." }` if `name.toLowerCase()` matches any entry in `categories` (case-insensitive)
+    - Otherwise: push trimmed name onto `categories`; call `storage_saveCategories(categories)`; call `rendering_renderCategoryDropdown()` and `rendering_renderCategoryList()`; return `{ success: true }`
+    - _Requirements: 10.2, 10.3, 10.4_
+
+  - [x] 10.6 Implement `categories_delete(name)` in `js/app.js`
+    - Guard: if `name` is in `DEFAULT_CATEGORIES`, return immediately — do nothing
+    - Remove `name` from `categories` array (splice by index)
+    - Call `storage_saveCategories(categories)`, `rendering_renderCategoryDropdown()`, `rendering_renderCategoryList()`
+    - Do NOT touch `transactions` — existing transactions keep their category value
+    - _Requirements: 10.6, 10.7_
+
+  - [x] 10.7 Implement `rendering_renderCategoryDropdown()` in `js/app.js`
+    - Clear all `<option>` elements from `#input-category` except the empty default option
+    - For each name in `categories`: append `<option value="{name}">{name}</option>`
+    - _Requirements: 10.1, 10.8_
+
+  - [x] 10.8 Implement `rendering_renderCategoryList()` in `js/app.js`
+    - Clear `#category-list` innerHTML
+    - For each name in `categories`: create `<li>` with name text; if name is NOT in `DEFAULT_CATEGORIES`, append `<button class="delete-cat-btn" data-cat="{name}">✕</button>`; append `<li>` to `#category-list`
+    - _Requirements: 10.5, 10.7_
+
+  - [x] 10.9 Wire events for category add and delete in `js/app.js`
+    - `click` on `#btn-add-category`: read `#input-new-category` value → call `categories_add(name)` → if error set `#error-new-category` textContent; else clear input and `#error-new-category`
+    - `click` (delegated) on `#category-list`: if `event.target` has class `delete-cat-btn`, read `data-cat` → call `categories_delete(name)`
+    - _Requirements: 10.1, 10.6_
+
+  - [x] 10.10 Initialise categories in `DOMContentLoaded` in `js/app.js`
+    - After `storage_load()`, call `storage_loadCategories()` and merge: `categories = [...DEFAULT_CATEGORIES, ...customCats]`
+    - Call `rendering_renderCategoryDropdown()` and `rendering_renderCategoryList()`
+    - _Requirements: 10.8_
+
+  - [x] 10.11 Add CSS for category manager in `css/style.css`
+    - Style `#category-manager` with appropriate spacing below the transaction form
+    - Style `#category-add-row` as a flex row (input + button inline)
+    - Style `#category-list` items to show name and delete button in a single row; delete button small and visually distinct
+    - Default category items (no delete button) styled slightly differently (e.g. muted text) to indicate they are protected
+    - _Requirements: 10.5, 10.7_
+
+- [x] 11. Implement Dark/Light Mode Toggle
+  - [x] 11.1 Add theme toggle button to `index.html`
+    - Add `<button id="theme-toggle" aria-label="Switch to dark mode">🌙</button>` inside `<header>`
+    - _Requirements: 11.1_
+
+  - [x] 11.2 Add `THEME_KEY` constant in `js/app.js`
+    - Define `const THEME_KEY = "theme";` alongside the other constants
+    - Add a `// --- theme ---` comment block header for the new function group
+    - _Requirements: 11.2_
+
+  - [x] 11.3 Implement `theme_load()` in `js/app.js`
+    - Read `THEME_KEY` from `localStorage`
+    - Return the stored value if it is exactly `"dark"` or `"light"`
+    - Return `"light"` for any other value (missing key, unexpected string, or error)
+    - _Requirements: 11.3, 11.4_
+
+  - [x] 11.4 Implement `theme_apply(theme)` in `js/app.js`
+    - Call `document.documentElement.setAttribute("data-theme", theme)`
+    - Update `#theme-toggle` button: if `theme === "dark"` set `aria-label` to `"Switch to light mode"` and `textContent` to `"☀️"`; if `"light"` set `aria-label` to `"Switch to dark mode"` and `textContent` to `"🌙"`
+    - _Requirements: 11.1, 11.2_
+
+  - [x] 11.5 Implement `theme_toggle()` in `js/app.js`
+    - Read the current `data-theme` attribute from `document.documentElement`
+    - Flip the value: `"dark"` → `"light"`, `"light"` → `"dark"`
+    - Call `theme_apply(newTheme)`
+    - Write `newTheme` to `localStorage` under `THEME_KEY`
+    - _Requirements: 11.2_
+
+  - [x] 11.6 Replace hard-coded colour values with CSS custom properties in `css/style.css`
+    - Define CSS custom properties on `:root`: `--color-bg`, `--color-surface`, `--color-text`, `--color-border`, `--color-primary` with light-mode defaults
+    - Add `[data-theme="dark"]` selector on `<html>` overriding all five properties with dark-mode values
+    - Replace all hard-coded colour values throughout `style.css` with the corresponding `var(--color-*)` tokens
+    - _Requirements: 11.1, 11.2_
+
+  - [x] 11.7 Initialise theme first in `DOMContentLoaded` (FOUC prevention)
+    - As the very first action inside `DOMContentLoaded`, call `theme_load()` and pass the result to `theme_apply()` — before `storage_load()`, `storage_loadCategories()`, `chart_init()`, or `rendering_renderAll()`
+    - _Requirements: 11.3_
+
+  - [x] 11.8 Wire `click` event on `#theme-toggle`
+    - In the events section of `js/app.js`, add a `click` listener on `#theme-toggle` that calls `theme_toggle()`
+    - _Requirements: 11.1, 11.2_
